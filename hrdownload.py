@@ -45,6 +45,9 @@ class ScrapeHackerRank(object):
         if not self.doc:
             raise Exception("Error fetching HTML!")
 
+        self.html = self.__getHtml()
+        self.root = ET.fromstring(self.html)
+
         if not self.debug:
             self.__makeDir()
         if save:
@@ -72,31 +75,49 @@ class ScrapeHackerRank(object):
         body_html = self.doc.get('model',{}).get('body_html')
         if not body_html:
             raise Exception("Error, fetching body_html")
-        return "{}{}{}".format('<html>',body_html,'</html>')
+        html = "{}{}{}".format('<html>',body_html,'</html>')
+        soup = BeautifulSoup(html,'html.parser')
+        return soup.prettify()
 
     def __makeDir(self):
         if not os.path.isdir(self.dirname):
             print("Making directory: {}".format(self.dirname))
             os.makedirs(self.dirname)
 
+    def __getItext(self,node):
+        return "".join([t for t in node.itertext()]).strip()
+
+    def __getContent(self,which):
+        next_match_skip_tags = ['div','style','svg','defs']
+        if which not in ['input','output']:
+            raise Exception("Error, invalid switch: {}".format(which))
+
+        p_iter = self.root.iter()
+        for i in p_iter:
+            t = self.__getItext(i).lower()
+            fw = t.find(which)
+            if self.debug:
+                print("======================")
+                print(fw,i,i.tag)
+                print(t)
+            if fw > 0 and i.tag == 'strong':
+                while True:
+                    dtag = p_iter.next()
+                    if dtag.tag in next_match_skip_tags: continue
+                    if self.debug: print("Returning: {}".format(dtag))
+                    return self.__getItext(dtag)
+        return ''
+
     def makeFiles(self):
-        chead = self.doc.get('model',{}).get('python_template_head')
-        ctemplate = self.doc.get('model',{}).get('python_template')
-        ctail = self.doc.get('model',{}).get('python_template_tail')
+        chead = self.doc.get('model',{}).get('python_template_head','')
+        ctemplate = self.doc.get('model',{}).get('python_template','')
+        ctail = self.doc.get('model',{}).get('python_template_tail','')
 
-        html = self.__getHtml()
-        soup = BeautifulSoup(html,'html.parser')
-        root = ET.fromstring(soup.prettify())
-
-        hackdowns = []
-        for i in root.findall(".//*[@class='hackdown-content']/*/pre"):
-            hackdowns.append("".join([t for t in i.itertext()]))
-            #hackdowns.append(i.text.strip())
-        #grab the last two elements, throw away the first
         matches = {
-            'challenge_sample_output' : hackdowns.pop(),
-            'challenge_sample_input' : hackdowns.pop()
+            'challenge_sample_output' : self.__getContent('output'),
+            'challenge_sample_input' : self.__getContent('input'),
         }
+
         for fn,content in matches.items():
             fp = "{}/{}".format(self.dirname,fn)
             print("Writing: {}".format(fp))
@@ -110,50 +131,48 @@ class ScrapeHackerRank(object):
 # -*- coding: utf-8 -*-
 import __future__
 import sys
-#-- HEAD
-{}
 sys.stdin = open("./challenge_sample_input", 'r')
-
-#-- TEMPLATE
+# HEAD
 {}
 
-#--- TAIL
+# TEMPLATE
 {}
 
-#-------- CUSTOM
-if __name__ == '__main__':
-    s = raw_input()
-    i = int(raw_input())
-    arr = map(int, raw_input().split())
-        if self.debug:
-            print(fp,template_doc)
-        else:
-            open(fp, 'w').write(template_doc)
+# TAIL
+{}
 """.format(chead,ctemplate,ctail)
         open(fp, 'w').write(template_doc)
 
 """===================================================
 MAIN
 ==================================================="""
+"""
+turl = "https://www.hackerrank.com/challenges/alphabet-rangoli/problem"
+turl = "https://www.hackerrank.com/challenges/xml2-find-the-maximum-depth/problem"
+turl = "https://www.hackerrank.com/challenges/merge-the-tools/problem"
+"""
+
 if len(sys.argv) > 1:
     turl = sys.argv[1]
 else:
     turl = raw_input().strip()
 
-#turl = "https://www.hackerrank.com/challenges/xml2-find-the-maximum-depth/problem"
 if not turl: raise Exception("Error, url is not defined!")
-s = ScrapeHackerRank(
-    url=turl,
-    match_text='Sample Input',
-)
 try:
+    s = ScrapeHackerRank(
+        url=turl,
+        match_text='Sample Output',
+        #save=True,
+        #debug=True,
+    )
     s.makeFiles()
 except:
+    #sys.exit()
     #save output to test against
     print("ERROR! --- something went wrong. Saving output")
     s = ScrapeHackerRank(
         url=turl,
-        match_text='Sample Input',
+        match_text='Sample Output',
         save=True,
         #save=True,
         #debug=True,
