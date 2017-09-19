@@ -132,13 +132,18 @@ class ScrapeHackerRank(object):
 import __future__
 import sys
 sys.stdin = open("./challenge_sample_input", 'r')
-# HEAD
+print("===" * 30)
+print("SAMPLE OUTPUT:")
+print("===" * 30)
+print(open("./challenge_sample_output", 'r').read())
+print("===" * 30)
+print("START")
+print("===" * 30)
+
 {}
 
-# TEMPLATE
 {}
 
-# TAIL
 {}
 """.format(chead,ctemplate,ctail)
         open(fp, 'w').write(template_doc)
