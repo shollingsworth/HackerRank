@@ -126,7 +126,7 @@ class ScrapeHackerRank(object):
             else:
                 open(fp, 'w').write(content)
 
-        fp = "{}/{}".format(self.dirname,"main2.py")
+        fp = "{}/{}".format(self.dirname,"main.py")
         template_doc="""#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import __future__
