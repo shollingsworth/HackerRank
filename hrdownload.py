@@ -18,7 +18,6 @@ class ScrapeHackerRank(object):
         url,
         match_text,
         debug=False,
-        save=False,
     ):
         self.debug = debug
 
@@ -51,11 +50,6 @@ class ScrapeHackerRank(object):
         self.html = self.__getHtml()
         self.root = ET.fromstring(self.html)
 
-        if save:
-            fh = open(self.save_file, 'w').write(json.dumps(self.doc, indent=5))
-            print("Save file initiated => {}, exiting".format(self.save_file))
-            sys.exit()
-
     def __getDoc(self):
         ghost = Ghost()
         matches = []
@@ -77,16 +71,10 @@ class ScrapeHackerRank(object):
         raise Exception("Error, could not find: {}".format(self.match_text))
 
     def __cleanString(self,string):
+        #This was a nightmare... I'm probably still not doing it well but whatever
+        #wondering if hackerrank is going to throw some unicode at me at some point lol
         string,n = codecs.utf_8_decode(string.encode('utf-8','ignore'))
-        repl_with =  63 #ord '?'
-        ord_arr = map(ord,list(string))
-        new_arr = []
-        for i in ord_arr:
-            if i > 128:
-                new_arr.append(repl_with)
-            else:
-                new_arr.append(i)
-        return "".join(map(chr,new_arr))
+        return "".join(map(chr,[63 if i > 128 else i for i in map(ord,list(string))]))
 
     def __getHtml(self):
         body_html = self.doc.get('model',{}).get('body_html','')
