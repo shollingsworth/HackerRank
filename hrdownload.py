@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 import __future__
 import sys
 import os
@@ -10,6 +11,7 @@ import json
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import fromstring
 from bs4 import BeautifulSoup
+import html2text
 import PySide
 
 __match_main__ = '>Dashboard<'
@@ -19,8 +21,21 @@ __lang_switches__ = {
         'head' : 'python_template_head',
         'main' : 'python_template',
         'tail' : 'python_template_tail',
-        'fn'   : 'main.py'
-    }
+        'fn'   : 'main.py',
+        'matches': {
+            'challenge_sample_output' : ['output','strong'],
+            'challenge_sample_input' : ['input','strong'],
+        }
+    },
+    'ruby': {
+        'head' : 'ruby_template_head',
+        'main' : 'ruby_template',
+        'tail' : 'ruby_template_tail',
+        'fn'   : 'main.rb',
+        'matches': {
+            'hint' : ['hint','strong'],
+        },
+    },
 }
 
 class ScrapeHackerRank(object):
@@ -71,7 +86,7 @@ class ScrapeHackerRank(object):
 
         self.dirname = "{}/{}/{}".format(hr_dir,self.lang,hr_name)
         self.__makeDir()
-        print("Save file created: {}".format(self.save_file))
+        sys.stderr.write("Save file created: {}\n".format(self.save_file))
         open(self.save_file, 'w').write(json.dumps(self.doc, indent=5))
 
     def __getDoc(self):
@@ -100,10 +115,6 @@ class ScrapeHackerRank(object):
     def __getHtml(self):
         body_html = self.doc.get('model',{}).get('body_html','')
         body_html = self.__cleanString(body_html)
-        #html_save = "{}/debug.html".format(self.dirname)
-        #print("Saving html: {}".format(html_save))
-        #open(html_save, 'w', encoding='utf-8').write(body_html)
-        #wfh.write(body_html)
         if not body_html:
             raise Exception("Error, fetching body_html")
         html = "{}{}{}".format('<html>',body_html,'</html>')
@@ -112,37 +123,40 @@ class ScrapeHackerRank(object):
 
     def __makeDir(self):
         if not os.path.isdir(self.dirname):
-            print("Making directory: {}".format(self.dirname))
+            sys.stderr.write("Making directory: {}\n".format(self.dirname))
             os.makedirs(self.dirname)
 
     def __getItext(self,node):
         return "".join([t for t in node.itertext()]).strip()
 
-    def __getContent(self,which):
+    def __getContent(self,which,mytag):
         next_match_skip_tags = ['div','style','svg','defs']
-        if which not in ['input','output']:
-            raise Exception("Error, invalid switch: {}".format(which))
-
         p_iter = self.root.iter()
         for i in p_iter:
             t = self.__getItext(i).lower()
             fw = t.find(which)
             if self.debug:
-                print("======================")
-                print(fw,i,i.tag)
-                print(t)
-            if fw > 0 and i.tag == 'strong':
+                sys.stderr.write("======================\n")
+                try:
+                    sys.stderr.write("{}/{}/{}/{}\n".format(fw,i,i.tag))
+                except:
+                    pass
+                sys.stderr.write("{}\n".format(t))
+            if fw >= 0 and i.tag == mytag:
                 while True:
                     dtag = p_iter.next()
                     if dtag.tag in next_match_skip_tags: continue
-                    if self.debug: print("Returning: {}".format(dtag))
-                    return self.__getItext(dtag)
+                    text = self.__getItext(dtag)
+                    if self.debug:
+                        sys.stderr.write("Returning: {}\n".format(text))
+                    return text
         return ''
 
     def getLangSwitches(self):
         retarr = []
         for i in ['head','main','tail','fn']:
             retarr.append(__lang_switches__.get(self.lang,{}).get(i))
+        #sys.stderr.write("{}\n".format(retarr))
         return retarr
 
     def makeFiles(self):
@@ -151,22 +165,32 @@ class ScrapeHackerRank(object):
         ctemplate = self.doc.get('model',{}).get(t,'')
         ctail = self.doc.get('model',{}).get(t_tail,'')
 
-        matches = {
-            'challenge_sample_output' : self.__getContent('output'),
-            'challenge_sample_input' : self.__getContent('input'),
-        }
+
+
+        matches = __lang_switches__.get(self.lang,{}).get('matches')
+        if not matches:
+            raise Exception("Error, could not find matches in {}".format(__lang_switches__))
+
 
         for fn,content in matches.items():
+            which, tag = content
+            data = self.__getContent(which,tag)
             fp = "{}/{}".format(self.dirname,fn)
-            print("Writing: {}".format(fp))
+            sys.stderr.write("Writing: {}\n".format(fp))
             if self.debug:
-                print(fp,content)
+                sys.stderr.write("{} / {}\n".format(fp,data))
             else:
-                open(fp, 'w').write(content)
+                open(fp, 'w').write(data)
 
         fp = "{}/{}".format(self.dirname,main_fn)
         data = self.template_doc.format(chead,ctemplate,ctail).strip()
         open(fp, 'w').write(data)
+
+        gen_fp = "{}/{}".format(self.dirname,'content')
+        sys.stderr.write("Writing: {}\n".format(gen_fp))
+        open(gen_fp, 'w').write(html2text.html2text(self.html))
+        #finally for cd in "hr" alias in bash
+        sys.stdout.write("{}\n".format(self.dirname))
 
 """===================================================
 MAIN
