@@ -12,34 +12,36 @@ from xml.etree.ElementTree import fromstring
 from bs4 import BeautifulSoup
 import PySide
 
+__match_main__ = '>Dashboard<'
+__match_text__ = ',"body_html":"'
+__lang_switches__ = {
+    'python': {
+        'head' : 'python_template_head',
+        'main' : 'python_template',
+        'tail' : 'python_template_tail',
+        'fn'   : 'main.py'
+    }
+}
+
 class ScrapeHackerRank(object):
     def __init__(
         self,
         url,
-        match_text,
         debug=False,
     ):
         self.debug = debug
-
+        self.url = url
         hr_dir = os.environ.get("HR_DIR")
         if not hr_dir:
             raise Exception("Error, set HR_DIR to your hacker_rank directory as an environment variable")
-        try:
-            hr_name = url.split('/')[-2]
-        except:
-            hr_name = None
-        if not hr_name:
-            raise Exception("Error extracting section name from url: {}".format(url))
         if not os.path.isdir(hr_dir):
             raise Exception("Error, cannot find hackerRank directory: {}".format(hr_dir))
 
-        self.dirname = "{}/python/{}".format(hr_dir,hr_name)
-        self.match_text = match_text
-        self.url = url
-        self.save_file = "{}/debug.json".format(self.dirname)
-        self.__makeDir()
+        self.save_file = "{}/debug.json".format(hr_dir)
 
         if self.debug:
+            if not os.path.isfile(self.save_file):
+                raise Exception("Error, debug enabled but save file is not populated")
             self.doc = json.load(open(self.save_file, 'r'))
         else:
             self.doc = self.__getDoc()
@@ -49,6 +51,28 @@ class ScrapeHackerRank(object):
 
         self.html = self.__getHtml()
         self.root = ET.fromstring(self.html)
+
+        model = self.doc.get('model')
+        if not model: 
+            raise Exception("Error getting model from json! see {} for details".format(self.save_file))
+
+        slug = model.get('slug')
+        self.lang = model.get('track',{}).get('track_slug')
+        if not slug:
+            raise Exception("Error detecting model['slug'] see {} for details".format(self.save_file))
+        if not self.lang:
+            raise Exception("Error detecting model['track']['track_slug'] see {} for details".format(self.save_file))
+
+        hr_name = slug
+        template_fn = '{}/templates/{}'.format(hr_dir,self.lang)
+        if not os.path.isfile(template_fn):
+            raise Exception("Error, template for language: {} does not exist".format(template_fn))
+        self.template_doc = open(template_fn,'r').read()
+
+        self.dirname = "{}/{}/{}".format(hr_dir,self.lang,hr_name)
+        self.__makeDir()
+        print("Save file created: {}".format(self.save_file))
+        open(self.save_file, 'w').write(json.dumps(self.doc, indent=5))
 
     def __getDoc(self):
         ghost = Ghost()
@@ -60,15 +84,12 @@ class ScrapeHackerRank(object):
             wait=False,
 
         )
-        page,resources = g.wait_for_text(self.match_text)
+        page,resources = g.wait_for_text(__match_main__)
         if page:
             for r in resources:
-                if str(r.content).find(self.match_text) >= 0:
-                    print("Save file created: {}".format(self.save_file))
-                    fh = open(self.save_file, 'w').write(r.content)
+                if str(r.content).find(__match_text__) >= 0:
                     return json.loads(str(r.content))
-
-        raise Exception("Error, could not find: {}".format(self.match_text))
+        raise Exception("Error, could not find: {}".format(__match_text__))
 
     def __cleanString(self,string):
         #This was a nightmare... I'm probably still not doing it well but whatever
@@ -118,10 +139,17 @@ class ScrapeHackerRank(object):
                     return self.__getItext(dtag)
         return ''
 
+    def getLangSwitches(self):
+        retarr = []
+        for i in ['head','main','tail','fn']:
+            retarr.append(__lang_switches__.get(self.lang,{}).get(i))
+        return retarr
+
     def makeFiles(self):
-        chead = self.doc.get('model',{}).get('python_template_head','')
-        ctemplate = self.doc.get('model',{}).get('python_template','')
-        ctail = self.doc.get('model',{}).get('python_template_tail','')
+        t_head, t, t_tail, main_fn = self.getLangSwitches()
+        chead = self.doc.get('model',{}).get(t_head,'')
+        ctemplate = self.doc.get('model',{}).get(t,'')
+        ctail = self.doc.get('model',{}).get(t_tail,'')
 
         matches = {
             'challenge_sample_output' : self.__getContent('output'),
@@ -136,31 +164,9 @@ class ScrapeHackerRank(object):
             else:
                 open(fp, 'w').write(content)
 
-        fp = "{}/{}".format(self.dirname,"main.py")
-        template_doc="""#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-import __future__
-import sys
-print("===" * 30)
-print("SAMPLE INPUT:")
-print("===" * 30)
-print(open("./challenge_sample_input", 'r').read())
-sys.stdin = open("./challenge_sample_input", 'r')
-print("===" * 30)
-print("SAMPLE OUTPUT:")
-print("===" * 30)
-print(open("./challenge_sample_output", 'r').read())
-print("===" * 30)
-print("START")
-print("===" * 30)
-
-{}
-
-{}
-
-{}
-""".format(chead,ctemplate,ctail).strip()
-        open(fp, 'w').write(template_doc)
+        fp = "{}/{}".format(self.dirname,main_fn)
+        data = self.template_doc.format(chead,ctemplate,ctail).strip()
+        open(fp, 'w').write(data)
 
 """===================================================
 MAIN
@@ -169,7 +175,7 @@ MAIN
 turl = "https://www.hackerrank.com/challenges/alphabet-rangoli/problem"
 turl = "https://www.hackerrank.com/challenges/xml2-find-the-maximum-depth/problem"
 turl = "https://www.hackerrank.com/challenges/merge-the-tools/problem"
-turl="https://www.hackerrank.com/challenges/py-the-captains-room/problem"
+turl = "https://www.hackerrank.com/challenges/py-the-captains-room/problem"
 """
 
 """
@@ -182,7 +188,6 @@ else:
 if not turl: raise Exception("Error, url is not defined!")
 s = ScrapeHackerRank(
     url=turl,
-    match_text='Sample Output',
 #    debug=True,
 )
 s.makeFiles()
