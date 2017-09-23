@@ -1,0 +1,3 @@
+unless user.is_admin?
+    user.update_score
+end
