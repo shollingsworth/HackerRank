@@ -175,6 +175,9 @@ class ScrapeHackerRank(object):
         for fn,content in matches.items():
             which, tag = content
             data = self.__getContent(which,tag)
+            if not data:
+                sys.stderr.write("content: {} / {} was not a match, skipping write\n".format(which,tag))
+                continue
             fp = "{}/{}".format(self.dirname,fn)
             sys.stderr.write("Writing: {}\n".format(fp))
             if self.debug:
