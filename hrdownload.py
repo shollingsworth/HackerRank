@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 import html2text
 import PySide
 
+__default_lang__ = 'python'
 __match_main__ = '>Dashboard<'
 __match_text__ = ',"body_html":"'
 __lang_switches__ = {
@@ -67,12 +68,18 @@ class ScrapeHackerRank(object):
         self.html = self.__getHtml()
         self.root = ET.fromstring(self.html)
 
+        sys.stderr.write("Save file created: {}\n".format(self.save_file))
+        open(self.save_file, 'w').write(json.dumps(self.doc, indent=5))
+
         model = self.doc.get('model')
         if not model: 
             raise Exception("Error getting model from json! see {} for details".format(self.save_file))
 
         slug = model.get('slug')
         self.lang = model.get('track',{}).get('track_slug')
+        if self.lang not in __lang_switches__.keys():
+            sys.stderr.write("hrm... seems track/slug_name '{}'' isn't in our languages. Defaulting to: '{}'".format(self.lang,__default_lang__))
+            self.lang = __default_lang__
         if not slug:
             raise Exception("Error detecting model['slug'] see {} for details".format(self.save_file))
         if not self.lang:
@@ -86,8 +93,6 @@ class ScrapeHackerRank(object):
 
         self.dirname = "{}/{}/{}".format(hr_dir,self.lang,hr_name)
         self.__makeDir()
-        sys.stderr.write("Save file created: {}\n".format(self.save_file))
-        open(self.save_file, 'w').write(json.dumps(self.doc, indent=5))
 
     def __getDoc(self):
         ghost = Ghost()
