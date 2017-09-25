@@ -23,8 +23,8 @@ __lang_switches__ = {
         'tail' : 'python_template_tail',
         'fn'   : 'main.py',
         'matches': {
-            'challenge_sample_output' : ['output','strong'],
-            'challenge_sample_input' : ['input','strong'],
+            'challenge_sample_output' : ['sample output','strong'],
+            'challenge_sample_input' : ['sample input','strong'],
         }
     },
     'ruby': {
@@ -135,14 +135,12 @@ class ScrapeHackerRank(object):
         for i in p_iter:
             t = self.__getItext(i).lower()
             fw = t.find(which)
-            if self.debug:
-                sys.stderr.write("======================\n")
-                try:
-                    sys.stderr.write("{}/{}/{}/{}\n".format(fw,i,i.tag))
-                except:
-                    pass
-                sys.stderr.write("{}\n".format(t))
             if fw >= 0 and i.tag == mytag:
+                if self.debug:
+                    sys.stderr.write("{}\n".format("-*-" * 20))
+                    try: sys.stderr.write("{}/{}/{}\n".format(fw,i,i.tag))
+                    except: pass
+                    sys.stderr.write("{}\n".format(t))
                 while True:
                     dtag = p_iter.next()
                     if dtag.tag in next_match_skip_tags: continue
@@ -174,7 +172,7 @@ class ScrapeHackerRank(object):
 
         for fn,content in matches.items():
             which, tag = content
-            data = self.__getContent(which,tag)
+            data = "\n".join(l.strip() for l in self.__getContent(which,tag).split("\n"))
             if not data:
                 sys.stderr.write("content: {} / {} was not a match, skipping write\n".format(which,tag))
                 continue
