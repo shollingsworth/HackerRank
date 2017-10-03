@@ -2,15 +2,19 @@
 # -*- coding: utf-8 -*-
 import __future__
 import sys
+
+ip = "./challenge_sample_input"
+op = "./challenge_sample_output"
+
 print("===" * 30)
 print("SAMPLE INPUT:")
 print("===" * 30)
-print(open("./challenge_sample_input", 'r').read())
-sys.stdin = open("./challenge_sample_input", 'r')
+print(open(ip, 'r').read())
+sys.stdin = open(ip, 'r')
 print("===" * 30)
 print("SAMPLE OUTPUT:")
 print("===" * 30)
-print(open("./challenge_sample_output", 'r').read())
+print(open(op, 'r').read())
 print("===" * 30)
 print("START")
 print("===" * 30)

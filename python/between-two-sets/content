@@ -1,0 +1,60 @@
+Consider two sets of positive integers,  and  . We say that a positive
+integer,  , is _ between _ sets  and  if the following conditions are
+satisfied:
+
+  1. All elements in  are factors of  . 
+  2. is a factor of all elements in  . 
+
+In other words, some  is _ between _ and  if that value of  satisfies  for
+every  in  and also satisfies  for every  in  . For example, if  and  , then
+our possible  values are  and  .
+
+Given  and  , find and print the number of integers (i.e., possible  's) that
+are _ between _ the two sets.
+
+** Input Format **
+
+The first line contains two space-separated integers describing the respective
+values of  (the number of elements in set  ) and  (the number of elements in
+set  ).  
+The second line contains  distinct space-separated integers describing  .  
+The third line contains  distinct space-separated integers describing  .
+
+** Constraints **
+
+  *   *   * 
+
+** Output Format **
+
+Print the number of integers that are considered to be _ between _ and  .
+
+** Sample Input **
+    
+    
+    2 3
+    2 4
+    16 32 96
+    
+
+** Sample Output **
+    
+    
+    3
+    
+
+** Explanation **
+
+There are three  values _ between _ and  :
+
+  * : 
+    * All the elements in  evenly divide  . 
+    * evenly divides all the elements in  . 
+  * : 
+    * All the elements in  evenly divide  . 
+    * evenly divides all the elements in  . 
+  * : 
+    * All the elements in  evenly divide  . 
+    * evenly divides all the elements in  . 
+
+Thus, we print  as our answer.
+
