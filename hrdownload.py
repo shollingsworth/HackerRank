@@ -189,7 +189,7 @@ class ScrapeHackerRank(object):
                 open(fp, 'w').write(data)
 
         fp = "{}/{}".format(self.dirname,main_fn)
-        data = self.template_doc.format(chead,ctemplate,ctail).strip()
+        data = self.template_doc.format(self.url,chead,ctemplate,ctail).strip()
         open(fp, 'w').write(data)
 
         gen_fp = "{}/{}".format(self.dirname,'content')

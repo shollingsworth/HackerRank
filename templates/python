@@ -2,22 +2,19 @@
 # -*- coding: utf-8 -*-
 import __future__
 import sys
+import json
+
+def banner():
+    ban = '====' * 30
+    print("{}\nSAMPLE INP:\n{}\n{}".format(ban,ban,open(ip, 'r').read()))
+    print("{}\nSAMPLE OUT:\n{}\n{}".format(ban,ban,open(op, 'r').read()))
+    print("{}\nSTART:\n{}".format(ban,ban))
+    sys.stdin = open(ip, 'r')
 
 ip = "./challenge_sample_input"
 op = "./challenge_sample_output"
-
-print("===" * 30)
-print("SAMPLE INPUT:")
-print("===" * 30)
-print(open(ip, 'r').read())
-sys.stdin = open(ip, 'r')
-print("===" * 30)
-print("SAMPLE OUTPUT:")
-print("===" * 30)
-print(open(op, 'r').read())
-print("===" * 30)
-print("START")
-print("===" * 30)
+banner()
+# {}
 
 {}
 

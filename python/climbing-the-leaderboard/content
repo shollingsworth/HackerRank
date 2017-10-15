@@ -1,0 +1,99 @@
+Alice is playing an arcade game and wants to climb to the top of the
+leaderboard. Can you help her track her ranking as she beats each level? The
+game uses [ Dense Ranking
+](https://en.wikipedia.org/wiki/Ranking#Dense_ranking_.28.221223.22_ranking.29)
+, so its leaderboard works like this:
+
+  * The player with the highest score is ranked number  on the leaderboard. 
+  * Players who have equal scores receive the same ranking number, and the next player(s) receive the immediately following ranking number. 
+
+For example, four players have the scores  ,  ,  , and  . Those players will
+have ranks  ,  ,  , and  , respectively.
+
+When Alice starts playing, there are already  people on the leaderboard. The
+score of each player  is denoted by  . Alice plays for  levels, and we denote
+her total score after passing each level  as  . After completing each level,
+Alice wants to know her current rank.
+
+You are given an array,  , of _ [ monotonically decreasing
+](https://en.wikipedia.org/wiki/Monotonic_function) _ leaderboard scores, and
+another array,  , of Alice's cumulative scores for each level of the game. You
+must print  integers. The  integer should indicate the current rank of alice
+after passing the  level.
+
+** Input Format **
+
+The first line contains an integer,  , denoting the number of players already
+on the leaderboard.  
+The next line contains  space-separated integers describing the respective
+values of  .  
+The next line contains an integer,  , denoting the number of levels Alice
+beats.  
+The last line contains  space-separated integers describing the respective
+values of  .
+
+** Constraints **
+
+  *   *   * for 
+  * for 
+  * The existing leaderboard,  , is in _ descending _ order. 
+  * Alice's scores are cumulative, so  is in _ ascending _ order. 
+
+** Subtask **
+
+For  of the maximum score:
+
+  *   * 
+
+** Output Format **
+
+Print  integers. The  integer should indicate the rank of alice after passing
+the  level.
+
+** Sample Input 0 **
+    
+    
+    7
+    100 100 50 40 40 20 10
+    4
+    5 25 50 120
+    
+
+** Sample Output 0 **
+    
+    
+    6
+    4
+    2
+    1
+    
+
+** Explanation 0 **
+
+Alice starts playing with  players already on the leaderboard, which looks
+like this:
+
+![image](https://s3.amazonaws.com/hr-challenge-
+images/0/1481263702-9b5e9abd56-climbingrank.png)
+
+After Alice finishes level  , her score is  and her ranking is  :
+
+![image](https://s3.amazonaws.com/hr-challenge-images/0/1481263847-2443e11cea-
+climbingrank1.png)
+
+After Alice finishes level  , her score is  and her ranking is  :
+
+![image](https://s3.amazonaws.com/hr-challenge-
+images/0/1481264155-cb76495070-climbingrank3.png)
+
+After Alice finishes level  , her score is  and her ranking is tied with
+Caroline at  :
+
+![image](https://s3.amazonaws.com/hr-challenge-
+images/0/1481264229-a216b3a974-climbingrank4.png)
+
+After Alice finishes level  , her score is  and her ranking is  :
+
+![image](https://s3.amazonaws.com/hr-challenge-images/0/1481264323-30f93fa8de-
+climbingrank5.png)
+
