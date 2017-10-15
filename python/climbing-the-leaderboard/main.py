@@ -15,7 +15,7 @@ cnt = -1
 def comp(inp,ln):
     outl = output_arr[ln]
     if str(inp) != outl:
-        raise Exception("Error input output: line {}, file: {} lv: {}\ngot: {} expected: {}".format(ln,op,lv,inp,outl))
+        raise Exception("Error input output: line {}, file: {}\ngot: {} expected: {}".format(ln,op,inp,outl))
 
 ip = "./challenge_sample_input"
 op = "./challenge_sample_output"
