@@ -13,10 +13,10 @@ from xml.etree.ElementTree import fromstring
 from bs4 import BeautifulSoup
 import html2text
 import PySide
+import urllib
 
 __default_lang__ = 'python'
-__match_main__ = '>Dashboard<'
-__match_text__ = ',"body_html":"'
+__match_main__ = '<script type="application/json" id="initialData">'
 __lang_switches__ = {
     'python': {
         'head' : 'python_template_head',
@@ -61,29 +61,24 @@ class ScrapeHackerRank(object):
             self.doc = json.load(open(self.save_file, 'r'))
         else:
             self.doc = self.__getDoc()
+            open(self.save_file, 'w').write(json.dumps(self.doc, indent=5))
+            sys.stderr.write("Save file created: {}\n".format(self.save_file))
 
         if not self.doc:
-            raise Exception("Error fetching HTML!")
+            raise Exception("Error fetching JSON Doc!")
 
         self.html = self.__getHtml()
         self.root = ET.fromstring(self.html)
 
-        sys.stderr.write("Save file created: {}\n".format(self.save_file))
-        open(self.save_file, 'w').write(json.dumps(self.doc, indent=5))
-
-        model = self.doc.get('model')
-        if not model: 
-            raise Exception("Error getting model from json! see {} for details".format(self.save_file))
-
-        slug = model.get('slug')
-        self.lang = model.get('track',{}).get('track_slug')
+        slug = self.doc.get('slug')
+        self.lang = self.doc.get('track',{}).get('track_slug')
         if self.lang not in __lang_switches__.keys():
             sys.stderr.write("hrm... seems track/slug_name '{}'' isn't in our languages. Defaulting to: '{}'".format(self.lang,__default_lang__))
             self.lang = __default_lang__
         if not slug:
-            raise Exception("Error detecting model['slug'] see {} for details".format(self.save_file))
+            raise Exception("Error detecting key ['slug'] see {} for details".format(self.save_file))
         if not self.lang:
-            raise Exception("Error detecting model['track']['track_slug'] see {} for details".format(self.save_file))
+            raise Exception("Error detecting key ['track']['track_slug'] see {} for details".format(self.save_file))
 
         hr_name = slug
         template_fn = '{}/templates/{}'.format(hr_dir,self.lang)
@@ -94,22 +89,48 @@ class ScrapeHackerRank(object):
         self.dirname = "{}/{}/{}".format(hr_dir,self.lang,hr_name)
         self.__makeDir()
 
+    def __getParsedDoc(self,html):
+        html = html.split('\n')
+        remove_lines = [
+            '<!DOCTYPE doctype html>',
+        ]
+        filtered = [line for idx,line in enumerate(html) for rm in remove_lines if line.find(rm) < 0]
+        txt = "\n".join(filtered)
+        soup = BeautifulSoup(txt,'html.parser')
+        for tag in soup.find_all('script'):
+            tid = tag.get('id')
+            if tid != 'initialData': continue
+            uq = urllib.unquote(tag.text)
+            dat = json.loads(uq)
+            break 
+        challenge = dat.get('community',{}).get('challenges',{}).get('challenge')
+        k = challenge.keys().pop()
+        return challenge[k].get('detail')
+
     def __getDoc(self):
+        user_agent = [
+            'Mozilla/5.0',
+            '(X11; Linux x86_64)',
+            'AppleWebKit/537.36',
+            '(KHTML, like Gecko)',
+            'Ubuntu Chromium/62.0.3202.75',
+            'Chrome/62.0.3202.75',
+            'Safari/537.36',
+        ]
         ghost = Ghost()
         matches = []
         g = ghost.start()
         g.open(
             address=self.url,
-            user_agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.121 Safari/535.2',
+            user_agent=" ".join(user_agent),
             wait=False,
 
         )
         page,resources = g.wait_for_text(__match_main__)
-        if page:
-            for r in resources:
-                if str(r.content).find(__match_text__) >= 0:
-                    return json.loads(str(r.content))
-        raise Exception("Error, could not find: {}".format(__match_text__))
+        if not page: raise Exception("Error, could not find: {}".format(__match_text__))
+        html = [r.content for r in resources if str(r.content).find(__match_main__) >= 0][0]
+        html = self.__cleanString(html)
+        return self.__getParsedDoc(html)
 
     def __cleanString(self,string):
         #This was a nightmare... I'm probably still not doing it well but whatever
@@ -118,13 +139,14 @@ class ScrapeHackerRank(object):
         return "".join(map(chr,[63 if i > 128 else i for i in map(ord,list(string))]))
 
     def __getHtml(self):
-        body_html = self.doc.get('model',{}).get('body_html','')
-        body_html = self.__cleanString(body_html)
-        if not body_html:
-            raise Exception("Error, fetching body_html")
-        html = "{}{}{}".format('<html>',body_html,'</html>')
-        soup = BeautifulSoup(html,'html.parser')
-        return soup.prettify()
+        html = self.doc.get('body_html')
+        if not html: raise Exception("Error, fetching body_html")
+        html = "<html><body>{}</body></html>".format(html)
+        soup = BeautifulSoup(html.strip(),'html.parser')
+        pdoc = soup.prettify()
+        #print(retval)
+        #print(pdoc)
+        return pdoc
 
     def __makeDir(self):
         if not os.path.isdir(self.dirname):
@@ -164,16 +186,12 @@ class ScrapeHackerRank(object):
 
     def makeFiles(self):
         t_head, t, t_tail, main_fn = self.getLangSwitches()
-        chead = self.doc.get('model',{}).get(t_head,'')
-        ctemplate = self.doc.get('model',{}).get(t,'')
-        ctail = self.doc.get('model',{}).get(t_tail,'')
-
-
-
+        chead = self.doc.get(t_head,'')
+        ctemplate = self.doc.get(t,'')
+        ctail = self.doc.get(t_tail,'')
         matches = __lang_switches__.get(self.lang,{}).get('matches')
         if not matches:
             raise Exception("Error, could not find matches in {}".format(__lang_switches__))
-
 
         for fn,content in matches.items():
             which, tag = content
@@ -202,18 +220,15 @@ class ScrapeHackerRank(object):
 MAIN
 ==================================================="""
 """
-turl = "https://www.hackerrank.com/challenges/alphabet-rangoli/problem"
-turl = "https://www.hackerrank.com/challenges/xml2-find-the-maximum-depth/problem"
-turl = "https://www.hackerrank.com/challenges/merge-the-tools/problem"
-turl = "https://www.hackerrank.com/challenges/py-the-captains-room/problem"
+turl = "?"
 """
 
-"""
-"""
 if len(sys.argv) > 1:
     turl = sys.argv[1]
 else:
     turl = raw_input().strip()
+"""
+"""
 
 if not turl: raise Exception("Error, url is not defined!")
 s = ScrapeHackerRank(
