@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import __future__
+import sys
+import json
+
+def banner():
+    ban = '====' * 30
+    print("{}\nSAMPLE INP:\n{}\n{}".format(ban,ban,open(ip, 'r').read()))
+    print("{}\nSAMPLE OUT:\n{}\n{}".format(ban,ban,open(op, 'r').read()))
+    print("{}\nSTART:\n{}".format(ban,ban))
+    sys.stdin = open(ip, 'r')
+
+cnt = -1
+def comp(inp,ln):
+    outl = output_arr[ln]
+    if str(inp) != outl:
+        raise Exception("Error input output: line {}, file: {}\ngot: {} expected: {}".format(ln,op,inp,outl))
+
+
+ip = "./challenge_sample_input"
+op = "./challenge_sample_output"
+output_arr = map(str,open(op,'r').read().split('\n'))
+banner()
+# https://www.hackerrank.com/challenges/array-left-rotation/problem
+
+
+
+#!/bin/python
+import sys
+def leftRotation(arr, rotations):
+    al = len(arr)
+    nr = rotations % al
+    return arr[nr:al] + arr[0:nr]
+
+if __name__ == "__main__":
+    n, d = map(int,raw_input().strip().split(' '))
+    a = map(int, raw_input().strip().split(' '))
+    print " ".join(map(str, leftRotation(a, d)))
