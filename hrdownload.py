@@ -124,7 +124,7 @@ class ScrapeHackerRank(object):
             address=self.url,
             user_agent=" ".join(user_agent),
             wait=False,
-
+            timeout=15,
         )
         page,resources = g.wait_for_text(__match_main__)
         if not page: raise Exception("Error, could not find: {}".format(__match_text__))
@@ -135,8 +135,8 @@ class ScrapeHackerRank(object):
     def __cleanString(self,string):
         #This was a nightmare... I'm probably still not doing it well but whatever
         #wondering if hackerrank is going to throw some unicode at me at some point lol
-        string,n = codecs.utf_8_decode(string.encode('utf-8','ignore'))
-        return "".join(map(chr,[63 if i > 128 else i for i in map(ord,list(string))]))
+        #string,n = codecs.utf_8_decode(string.encode('utf-8','ignore'))
+        return "".join( map(chr, [ 63 if i > 128 else i for i in map(ord,list(str(string))) ]))
 
     def __getHtml(self):
         html = self.doc.get('body_html')
