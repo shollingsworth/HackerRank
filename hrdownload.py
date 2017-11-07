@@ -90,7 +90,7 @@ class ScrapeHackerRank(object):
         self.__makeDir()
 
     def __getParsedDoc(self,html):
-        html = html.split('\n')
+        html = str(html).split('\n')
         remove_lines = [
             '<!DOCTYPE doctype html>',
         ]
@@ -101,6 +101,7 @@ class ScrapeHackerRank(object):
             tid = tag.get('id')
             if tid != 'initialData': continue
             uq = urllib.unquote(tag.text)
+            uq = self.__cleanString(uq)
             dat = json.loads(uq)
             break 
         challenge = dat.get('community',{}).get('challenges',{}).get('challenge')
@@ -128,15 +129,14 @@ class ScrapeHackerRank(object):
         )
         page,resources = g.wait_for_text(__match_main__)
         if not page: raise Exception("Error, could not find: {}".format(__match_text__))
-        html = [r.content for r in resources if str(r.content).find(__match_main__) >= 0][0]
-        html = self.__cleanString(html)
+        html = [r.content for r in resources if str(r.content).find(__match_main__) >= 0].pop(0)
         return self.__getParsedDoc(html)
 
     def __cleanString(self,string):
         #This was a nightmare... I'm probably still not doing it well but whatever
         #wondering if hackerrank is going to throw some unicode at me at some point lol
-        #string,n = codecs.utf_8_decode(string.encode('utf-8','ignore'))
-        return "".join( map(chr, [ 63 if i > 128 else i for i in map(ord,list(str(string))) ]))
+        string,n = codecs.utf_8_decode(string.encode('utf-8','ignore'))
+        return "".join( map(chr, [ 63 if i > 128 else i for i in map(ord,list(string)) ]))
 
     def __getHtml(self):
         html = self.doc.get('body_html')
