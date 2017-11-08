@@ -1,22 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import __future__
-#import cmath
-import math
 import sys
-print("===" * 30)
-print("SAMPLE INPUT:")
-print("===" * 30)
-print(open("./challenge_sample_input", 'r').read())
-sys.stdin = open("./challenge_sample_input", 'r')
-print("===" * 30)
-print("SAMPLE OUTPUT:")
-print("===" * 30)
-print(open("./challenge_sample_output", 'r').read())
-print("===" * 30)
-print("START")
-print("===" * 30)
+import json
 
-A,B = [int(raw_input()) for _ in range(2)]
-C = math.sqrt( (A ** 2) + (B ** 2)) 
-print(A,B,C)
+def banner():
+    ban = '====' * 30
+    print("{}\nSAMPLE INP:\n{}\n{}".format(ban,ban,open(ip, 'r').read()))
+    print("{}\nSAMPLE OUT:\n{}\n{}".format(ban,ban,open(op, 'r').read()))
+    print("{}\nSTART:\n{}".format(ban,ban))
+    sys.stdin = open(ip, 'r')
+
+cnt = -1
+def comp(inp,ln):
+    outl = output_arr[ln]
+    if str(inp) != outl:
+        raise Exception("Error input output: line {}, file: {}\ngot: {} expected: {}".format(ln,op,inp,outl))
+
+
+ip = "./challenge_sample_input"
+op = "./challenge_sample_output"
+output_arr = map(str,open(op,'r').read().split('\n'))
+banner()
+# https://www.hackerrank.com/challenges/find-angle/problem
+
+import math
+AB,BC = map(float,[int(raw_input()) for _ in range(2)])
+print(str(int(round(math.degrees(math.atan2(AB, BC)))))+'°')
