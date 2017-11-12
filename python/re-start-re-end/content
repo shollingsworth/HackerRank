@@ -1,0 +1,53 @@
+###  [ start() &amp; end()
+](https://docs.python.org/2/library/re.html#re.MatchObject.start)
+
+These expressions return the indices of the _ start _ and _ end _ of the
+substring matched by the group.
+
+** Code **
+    
+    
+    >>> import re
+    >>> m = re.search(r'\d+','1234')
+    >>> m.end()
+    4
+    >>> m.start()
+    0
+    
+
+* * *
+
+** Task **   
+You are given a string  .  
+Your task is to find the indices of the _ start _ and _ end _ of string  in  .
+
+** Input Format **
+
+The first line contains the string  .  
+The second line contains the string  .
+
+** Constraints **
+
+  
+
+** Output Format **
+
+Print the tuple in this format: ( _ start _ _ _ index _ , _ end _ _ _ index _
+).  
+If no match is found, print ` (-1, -1) ` .
+
+** Sample Input **
+    
+    
+    aaadaa
+    aa
+    
+
+** Sample Output **
+    
+    
+    (0, 1)  
+    (1, 2)
+    (4, 5)
+    
+
