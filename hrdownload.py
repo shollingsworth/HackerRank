@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-
 import __future__
 import sys
+import magic
 import os
 import codecs
 from ghost import Ghost
@@ -14,6 +13,7 @@ from bs4 import BeautifulSoup
 import html2text
 import PySide
 import urllib
+import logging
 
 __default_lang__ = 'python'
 __match_main__ = '<script type="application/json" id="initialData">'
@@ -55,6 +55,10 @@ class ScrapeHackerRank(object):
 
         self.save_file = "{}/debug.json".format(hr_dir)
 
+        self.ghost = Ghost(
+            log_level=logging.ERROR,
+        )
+
         if self.debug:
             if not os.path.isfile(self.save_file):
                 raise Exception("Error, debug enabled but save file is not populated")
@@ -89,6 +93,20 @@ class ScrapeHackerRank(object):
         self.dirname = "{}/{}/{}".format(hr_dir,self.lang,hr_name)
         self.__makeDir()
 
+
+    def __getModelType(self,resources):
+        for r in resources:
+            c = str(r.content)
+            mtype = magic.from_buffer(c,mime=True)
+            if str(mtype).find('text') < 0: continue
+            try:
+                j = json.loads(c)
+            except Exception as e:
+                continue
+            m = j.get('model')
+            if m:
+                return m
+
     def __getParsedDoc(self,html):
         html = str(html).split('\n')
         remove_lines = [
@@ -101,7 +119,7 @@ class ScrapeHackerRank(object):
             tid = tag.get('id')
             if tid != 'initialData': continue
             uq = urllib.unquote(tag.text)
-            uq = self.__cleanString(uq)
+            #uq = self.__cleanString(uq)
             dat = json.loads(uq)
             break 
         challenge = dat.get('community',{}).get('challenges',{}).get('challenge')
@@ -118,17 +136,18 @@ class ScrapeHackerRank(object):
             'Chrome/62.0.3202.75',
             'Safari/537.36',
         ]
-        ghost = Ghost()
         matches = []
-        g = ghost.start()
+        g = self.ghost.start()
         g.open(
             address=self.url,
             user_agent=" ".join(user_agent),
             wait=False,
-            timeout=15,
+            timeout=30,
         )
-        page,resources = g.wait_for_text(__match_main__)
-        if not page: raise Exception("Error, could not find: {}".format(__match_text__))
+        page,resources = g.wait_for_page_loaded()
+        model = self.__getModelType(resources)
+        if model:
+            return model
         html = [r.content for r in resources if str(r.content).find(__match_main__) >= 0].pop(0)
         return self.__getParsedDoc(html)
 
@@ -140,6 +159,7 @@ class ScrapeHackerRank(object):
 
     def __getHtml(self):
         html = self.doc.get('body_html')
+        html = self.__cleanString(html)
         if not html: raise Exception("Error, fetching body_html")
         html = "<html><body>{}</body></html>".format(html)
         soup = BeautifulSoup(html.strip(),'html.parser')
@@ -220,14 +240,14 @@ class ScrapeHackerRank(object):
 MAIN
 ==================================================="""
 """
-turl = "?"
 """
-
 if len(sys.argv) > 1:
     turl = sys.argv[1]
 else:
     turl = raw_input().strip()
+
 """
+turl = 'https://www.hackerrank.com/challenges/hex-color-code'
 """
 
 if not turl: raise Exception("Error, url is not defined!")
